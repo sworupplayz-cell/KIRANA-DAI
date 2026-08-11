@@ -19,6 +19,13 @@ The uploaded GLBs do not embed copyright/license metadata, and the original arch
 | `public/assets/environment/buildings/` | Kenney — City Kit (Suburban) | CC0 | https://kenney.nl/assets/city-kit-suburban |
 | `public/assets/characters/male/` | Quaternius — Ultimate Modular Men Pack | CC0 | https://quaternius.com/packs/ultimatemodularcharacters.html |
 | `public/assets/characters/female/` | Quaternius — Ultimate Modular Women Pack | CC0 | https://quaternius.com/packs/ultimatemodularwomen.html |
+| `public/assets/Supermercado.zip`, `public/assets/supermarket/`, and `public/assets/products/supermarket-pack/` | User-supplied Supermercado pack; creator and original source not identified | **LICENSE VERIFICATION REQUIRED** | No source or license file was included |
+
+## Supermercado conversion provenance
+
+The repository archive `public/assets/Supermercado.zip` contains 29 binary FBX files and no textures, README, author record, source URL, or license document. Embedded FBX metadata does not establish ownership or usage rights, and no reliable exact source match was identified. The archive's SHA-256 is `4ed4b74950df528a41f198feff1eea89fb9e61ab71ac88beb03d37bf7f53c44d`.
+
+The runtime GLBs under `public/assets/supermarket/` and `public/assets/products/supermarket-pack/` are technical conversions of that archive. Conversion does not change or establish the source license. These assets must remain marked **LICENSE VERIFICATION REQUIRED** and must not be represented as CC0. See `SUPERMARKET_ASSET_IMPORT.md` for the conversion and validation record.
 
 ## Exceptions and unresolved provenance
 

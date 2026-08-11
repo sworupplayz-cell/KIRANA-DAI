@@ -12,6 +12,10 @@ export default defineConfig({
   build: {
     target: 'es2020',
     sourcemap: true,
+    rollupOptions: {
+      // Keep conversion QA isolated from the normal game entry point.
+      input: ['index.html', 'supermarket-assets.html'],
+    },
     // Three.js renderer code is large uncompressed; monitor the gzip size too.
     chunkSizeWarningLimit: 650,
   },

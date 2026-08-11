@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#111820" />
+    <title>Supermercado Asset Verification</title>
+    <style>
+      :root { color: #eef4ef; background: #111820; font-family: Inter, system-ui, sans-serif; }
+      * { box-sizing: border-box; }
+      html, body, #verification-app { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+      canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+      .verification-panel { position: absolute; top: max(.7rem, env(safe-area-inset-top)); left: max(.7rem, env(safe-area-inset-left)); z-index: 2; width: min(32rem, calc(100% - 1.4rem)); max-height: 45%; overflow: auto; padding: .7rem .8rem; border: 1px solid #ffffff2a; border-radius: .6rem; background: #09110dd9; box-shadow: 0 .4rem 1.4rem #0008; font-size: .72rem; line-height: 1.4; }
+      .verification-panel h1 { margin: 0 0 .35rem; color: #f2bf64; font-size: .82rem; letter-spacing: .06em; text-transform: uppercase; }
+      .verification-panel p { margin: .2rem 0; }
+      .asset-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .14rem .8rem; margin-top: .35rem; color: #cbd7ce; }
+      .has-error { color: #ffad9f; }
+      @media (max-width: 30rem) { .verification-panel { max-height: 32%; font-size: .62rem; } .asset-grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <main id="verification-app" aria-label="Supermercado converted asset verification scene"></main>
+    <script type="module" src="/src/verification/supermarketAssets.ts"></script>
+  </body>
+</html>

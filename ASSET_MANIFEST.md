@@ -14,9 +14,9 @@
 
 ## Repository-wide findings
 
-- 393 GLB files (41,218,724 bytes) parsed as valid GLB 2.0 containers with no structural parse failures.
-- 406 files / approximately 41 MiB exist under `public/assets/` when textures, marker files, documentation, and three stray one-byte files are included.
-- Generators recorded in GLB metadata: 232 `UnityGLTF`, 140 `UniGLTF-1.24`, and 21 `FBX2glTF v0.9.7`.
+- 422 GLB files (42,816,724 bytes) parse as valid GLB 2.0 containers with no structural parse failures; this includes the 29 verified Supermercado conversions.
+- 438 files / approximately 42.6 MiB exist under `public/assets/` after retaining the original Supermercado ZIP and adding its converted GLBs.
+- Generators recorded in GLB metadata: 232 `UnityGLTF`, 140 `UniGLTF-1.24`, 21 `FBX2glTF v0.9.7`, and 29 `glTF-Transform v4.4.2` outputs converted from FBX2glTF.
 - No GLB contains copyright or license metadata. Source/license records below therefore rely on matching official pack names, exact model names, and pack counts.
 - Three 512×512 PNG color atlases are supplied. Their case/path did not initially match the GLBs' exact `Textures/colormap.png` URI; their repository paths were corrected without editing model data.
 - The roads upload did not contain its own atlas. Phase 1 reuses the existing CC0 City Kit (Suburban) atlas as a provisional compatibility fallback because the two City Kit packs share the same palette-atlas layout. The original City Kit (Roads) atlas is still not present and should be restored from the approved source before final environment work.
@@ -36,6 +36,7 @@ No local pack license files were uploaded. The local filenames and counts match 
 | Buildings | Kenney City Kit (Suburban) | **CC0 verified at source** | https://kenney.nl/assets/city-kit-suburban |
 | Male characters | Quaternius Ultimate Modular Men Pack (11 models, 24 animations each) | **CC0 verified at source** | https://quaternius.com/packs/ultimatemodularcharacters.html |
 | Female characters | Quaternius Ultimate Modular Women Pack (10 models, 24 animations each) | **CC0 verified at source** | https://quaternius.com/packs/ultimatemodularwomen.html |
+| Supermercado | User-supplied 29-FBX archive; original creator/source not identified | **LICENSE VERIFICATION REQUIRED** | No source or license file supplied |
 
 The duplicate-looking `Animated Woman-nIItLV9nxS.glb` has a download-style suffix not documented by the official pack. It is marked **LICENSE NEEDS VERIFICATION** and should not be selected while the canonical `Animated Woman.glb` is available.
 
@@ -50,6 +51,7 @@ The duplicate-looking `Animated Woman-nIItLV9nxS.glb` has a download-style suffi
 | Female characters | 10 | 14.97 MiB | 67,975 | `Sci Fi Character.glb` — 8,037 tris | Animated; one suitable character runtime verified |
 | Roads | 72 | 1.05 MiB | 12,662 | `road-roundabout.glb` — 1,636 tris | Geometry works; original atlas missing, fallback conditional |
 | Buildings / suburban extras | 40 | 2.49 MiB | 30,035 | `building-type-t.glb` — 2,062 tris | Two buildings runtime verified |
+| Supermercado conversions | 29 | 1.52 MiB | 59,854 | `shopping-cart.glb` — 19,958 tris | All 29 runtime rendered in isolated batches; license unresolved |
 
 ## Runtime-tested representative set
 
@@ -175,12 +177,32 @@ The final production build loaded all **41/41 selected GLB URLs** with no asset 
 
 At the initial 1280×800 desktop view, production diagnostics sampled up to **135 calls / 95,703 rendered triangles** with the single desktop shadow pass. At approximately 390×844 mobile emulation, the backing buffer was correctly capped at **585×1266** (DPR 1.5) and sampled **59 calls / 59,684 rendered triangles** without the optional shadow pass. Packaged Chromium reported approximately 20–22 FPS under software WebGL; this is a smoke-test signal, not a physical-phone benchmark. Desktop and mobile runs had no console errors, page errors, failed asset requests, or missing textures.
 
+## Supermercado conversion pack
+
+`public/assets/Supermercado.zip` was retrieved byte-for-byte from the repository branch and retained unchanged. Its 29 binary FBX files were genuinely converted with FBX2glTF 0.9.7, then conservatively cleaned with glTF Transform 4.4.2. All 29 final GLBs validate without errors or warnings and rendered through the existing `AssetManager` across isolated production-preview batches. They are not loaded by the active Mega Mart scene.
+
+The final pack totals 1,598,000 bytes, 59,854 triangles, 66 mesh primitives/draw calls, 61 used materials, and zero textures. The source archive contains no texture images, license, creator, or source record. License status is **LICENSE VERIFICATION REQUIRED**. The shopping cart remains the primary performance concern at 19,958 triangles and five draws after a conservative 25% simplification; the best repeat shelf is `shelf-marker.glb` at 1,476 triangles and one draw.
+
+See `SUPERMARKET_ASSET_IMPORT.md` for per-model dimensions, draw costs, paths, conversion settings, optimization deltas, visual/runtime checks, and the source archive hash.
+
 ## Complete uploaded GLB inventory
 
 ### Mini Market (20 GLB)
 - `bottle-return.glb`, `cash-register.glb`, `character-employee.glb`, `column.glb`, `display-bread.glb`, `display-fruit.glb`, `fence-door-rotate.glb`, `fence.glb`
 - `floor.glb`, `freezer.glb`, `freezers-standing.glb`, `shelf-bags.glb`, `shelf-boxes.glb`, `shelf-end.glb`, `shopping-basket.glb`, `shopping-cart.glb`
 - `wall-corner.glb`, `wall-door-rotate.glb`, `wall-window.glb`, `wall.glb`
+
+### Supermercado infrastructure (9 GLB)
+
+- Structure: `supermarket/structure/door.glb`
+- Retail: `supermarket/retail/cashier.glb`, `shelf-marker.glb`, `shelf-marker-2.glb`, `shelf-marker-3.glb`, `shelf-marker-4.glb`, `shopping-cart.glb`
+- Refrigeration: `supermarket/refrigeration/freezer.glb`, `freezer-2.glb`
+
+### Supermercado products (20 GLB)
+
+- `products/supermarket-pack/apple.glb`, `banana.glb`, `bread.glb`, `cheese.glb`, `chicken-leg.glb`, `chocolate.glb`, `coffee.glb`, `eggs.glb`
+- `products/supermarket-pack/fish.glb`, `fish-2.glb`, `grapes.glb`, `ice-cream.glb`, `juice.glb`, `lettuce.glb`, `meat.glb`, `milk.glb`
+- `products/supermarket-pack/pasta.glb`, `soap.glb`, `toaster.glb`, `tomato.glb`
 
 ### Furniture (140 GLB)
 - `bathroomCabinet.glb`, `bathroomCabinetDrawer.glb`, `bathroomMirror.glb`, `bathroomSink.glb`, `bathroomSinkSquare.glb`, `bathtub.glb`, `bear.glb`, `bedBunk.glb`
