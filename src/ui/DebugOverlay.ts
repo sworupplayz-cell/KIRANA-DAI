@@ -6,6 +6,7 @@ export class DebugOverlay {
   private readonly element: HTMLElement;
   private readonly statusElement: HTMLElement;
   private readonly metricsElement: HTMLElement;
+  private readonly assetStatusElement: HTMLElement;
   private elapsed = 0;
   private frames = 0;
 
@@ -15,7 +16,7 @@ export class DebugOverlay {
     this.element.setAttribute('aria-live', 'polite');
 
     const title = document.createElement('strong');
-    title.textContent = 'FOUNDATION TEST';
+    title.textContent = 'PHASE 2 · NEPALI MEGA MART';
 
     this.statusElement = document.createElement('span');
     this.statusElement.textContent = 'Renderer starting…';
@@ -23,11 +24,21 @@ export class DebugOverlay {
     this.metricsElement = document.createElement('span');
     this.metricsElement.textContent = 'FPS -- · calls -- · tris --';
 
+    this.assetStatusElement = document.createElement('span');
+    this.assetStatusElement.className = 'asset-status';
+    this.assetStatusElement.textContent = 'Mega Mart assets loading…';
+
     const controls = document.createElement('span');
     controls.className = 'control-hint';
-    controls.textContent = 'WASD move · drag orbit · wheel/pinch zoom';
+    controls.textContent = 'Click store to focus · WASD walk · drag/click to look';
 
-    this.element.append(title, this.statusElement, this.metricsElement, controls);
+    this.element.append(
+      title,
+      this.statusElement,
+      this.metricsElement,
+      this.assetStatusElement,
+      controls,
+    );
     host.append(this.element);
   }
 
@@ -46,6 +57,11 @@ export class DebugOverlay {
 
   setStatus(message: string): void {
     this.statusElement.textContent = message;
+  }
+
+  setAssetStatus(message: string, hasError = false): void {
+    this.assetStatusElement.textContent = message;
+    this.assetStatusElement.classList.toggle('has-error', hasError);
   }
 
   dispose(): void {

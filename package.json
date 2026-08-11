@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Mobile-first 3D foundation for Kirana Dai — Nepali Kirana Shop Simulator",
+  "description": "Mobile-first 3D foundation for Kirana Dai — Nepali Mega Mart Simulator",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",

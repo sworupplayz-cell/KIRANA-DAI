@@ -1,5 +1,12 @@
 import { Vector2 } from 'three';
 
+export interface InputDiagnostics {
+  pressedKeys: string[];
+  keyboard: readonly [number, number];
+  joystick: readonly [number, number];
+  combined: readonly [number, number];
+}
+
 const GAME_KEYS = new Set([
   'KeyW',
   'KeyA',
@@ -15,6 +22,7 @@ const GAME_KEYS = new Set([
 export class InputManager {
   private readonly pressed = new Set<string>();
   private readonly virtualMovement = new Vector2();
+  private readonly combinedMovement = new Vector2();
 
   constructor() {
     window.addEventListener('keydown', this.onKeyDown);
@@ -24,14 +32,20 @@ export class InputManager {
   }
 
   getMovement(target = new Vector2()): Vector2 {
-    const left = this.isAnyPressed('KeyA', 'ArrowLeft') ? 1 : 0;
-    const right = this.isAnyPressed('KeyD', 'ArrowRight') ? 1 : 0;
-    const forward = this.isAnyPressed('KeyW', 'ArrowUp') ? 1 : 0;
-    const backward = this.isAnyPressed('KeyS', 'ArrowDown') ? 1 : 0;
-
-    target.set(right - left, forward - backward).add(this.virtualMovement);
+    this.readKeyboardMovement(target).add(this.virtualMovement);
     if (target.lengthSq() > 1) target.normalize();
+    this.combinedMovement.copy(target);
     return target;
+  }
+
+  getDiagnostics(): InputDiagnostics {
+    const keyboard = this.readKeyboardMovement(new Vector2());
+    return {
+      pressedKeys: [...this.pressed].sort(),
+      keyboard: [keyboard.x, keyboard.y],
+      joystick: [this.virtualMovement.x, this.virtualMovement.y],
+      combined: [this.combinedMovement.x, this.combinedMovement.y],
+    };
   }
 
   setVirtualMovement(x: number, forward: number): void {
@@ -49,6 +63,14 @@ export class InputManager {
     window.removeEventListener('blur', this.reset);
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     this.reset();
+  }
+
+  private readKeyboardMovement(target: Vector2): Vector2 {
+    const left = this.isAnyPressed('KeyA', 'ArrowLeft') ? 1 : 0;
+    const right = this.isAnyPressed('KeyD', 'ArrowRight') ? 1 : 0;
+    const forward = this.isAnyPressed('KeyW', 'ArrowUp') ? 1 : 0;
+    const backward = this.isAnyPressed('KeyS', 'ArrowDown') ? 1 : 0;
+    return target.set(right - left, forward - backward);
   }
 
   private isAnyPressed(...codes: string[]): boolean {
@@ -72,6 +94,7 @@ export class InputManager {
   private readonly reset = (): void => {
     this.pressed.clear();
     this.virtualMovement.set(0, 0);
+    this.combinedMovement.set(0, 0);
   };
 
   private isTypingTarget(target: EventTarget | null): boolean {

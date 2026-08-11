@@ -6,6 +6,16 @@ if (!hostElement) throw new Error('Missing #app game host.');
 const host: HTMLElement = hostElement;
 
 let game: Game | undefined;
+const debugWindow = window as Window & {
+  __KIRANA_DEBUG__?: { getState: () => ReturnType<Game['getDiagnostics']> | null };
+};
+
+function exposeDebugDiagnostics(): void {
+  if (!new URLSearchParams(window.location.search).has('debug')) return;
+  debugWindow.__KIRANA_DEBUG__ = {
+    getState: () => game?.getDiagnostics() ?? null,
+  };
+}
 
 function showStartupError(error: unknown): void {
   console.error('Kirana Dai failed to initialize.', error);
@@ -27,6 +37,7 @@ function showStartupError(error: unknown): void {
 }
 
 function disposeGame(): void {
+  delete debugWindow.__KIRANA_DEBUG__;
   game?.dispose();
   game = undefined;
 }
@@ -34,6 +45,7 @@ function disposeGame(): void {
 try {
   game = new Game(host);
   game.start();
+  exposeDebugDiagnostics();
 } catch (error) {
   disposeGame();
   showStartupError(error);

@@ -2,39 +2,41 @@
 
 ## Premise
 
-**Kirana Dai — Nepali Kirana Shop Simulator** is a mobile-first 3D shop-management game about operating and growing a neighborhood kirana shop in Nepal.
+**Kirana Dai — Nepali Mega Mart Simulator** is a mobile-first, first-person store simulation set inside one large, persistent fictional Nepali department store.
 
-This file establishes direction only. The systems below are not part of the initialization phase.
+The store itself is the primary world. The design does not depend on an open city, traditional levels, XP, campaign stages, artificial unlock gates, missions, or reputation grinding. New simulation depth should make the same physical store more meaningful rather than replace it with disconnected levels.
 
-## Core loop
+## Persistent-store direction
 
-> Buy stock → arrange shop → open → serve customers → earn money → restock → upgrade → expand.
+A future operational loop may involve receiving appropriate stock, arranging departments, serving shoppers, maintaining the store, and improving its physical operation. Every such system requires its own later scope, interaction design, persistence model, and mobile-performance review.
 
-The loop should remain readable on a phone, satisfying in short sessions, and deep enough to support longer-term shop growth.
+This direction is not permission to add empty architecture or placeholder management screens now.
 
-## Future systems
+## Current Phase 2 boundary
 
-Later, separately scoped phases may add:
+The current milestone provides only:
 
-- shop management
-- products and product placement
-- inventory and restocking
-- customers
-- checkout
-- economy
-- upgrades
-- reputation
-- events
-- shop expansion
+- one large but mobile-conscious indoor Mega Mart
+- inside spawn and first-person physical traversal
+- wide main circulation and smaller secondary aisles
+- visibly different grocery, drinks/snacks, home/daily, books/stationery, and electronics zones
+- checkout, customer service, warehouse, and staff spaces
+- original fictional Nepali-style wayfinding
+- verified local low-poly fixtures and recognizable stock
+- lightweight collision, desktop controls, camera look, and mobile joystick
+
+The current milestone explicitly excludes inventory, money/economy, functional checkout, customer behavior, employee behavior, hiring, salaries, suppliers, dynamic events, missions, levels, XP, progression, reputation, and campaign systems.
 
 ## Product principles
 
-- Keep the setting recognizably Nepali and grounded in kirana-shop life.
+- Keep the setting recognizably Nepali through original language, color, and store identity without copying real brands.
+- Treat the store as a coherent place with human-scale routes, clear department identity, and persistent spatial memory.
 - Make touch interaction a first-class experience rather than a desktop control port.
-- Prefer clear simulation feedback over unnecessary complexity.
-- Protect performance on practical mobile hardware.
-- Add production-quality GLB/GLTF art intentionally; do not let test geometry become final art.
+- Prefer clear simulation feedback over unnecessary meta-progression.
+- Protect performance on practical mobile hardware through instancing, shared resources, restrained lighting, capped DPR, and measured asset selection.
+- Use only audited assets that fit the represented category. Record missing categories instead of filling them with unrelated props, generated substitutes, or placeholder mannequins.
+- Add architecture only when a current feature needs it; avoid empty future-system classes and directories.
 
-## Initialization boundary
+## Known art gaps
 
-The current milestone is only a technical foundation: rendering, lifecycle, asset loading, input seams, responsive UI, and a minimal test scene. It intentionally excludes the shop, NPCs, inventory, checkout, money, progression, missions, city, and multiplayer features.
+The repository does not yet contain suitable ranges for clothing, shoes, personal care/cosmetics, broad school stationery, toys/gifts, luggage, Nepal-specific packaged staples, pallets, or dedicated supermarket warehouse racking. These are asset requirements, not invitations to mislabel existing furniture.

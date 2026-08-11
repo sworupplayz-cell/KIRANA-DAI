@@ -1,76 +1,55 @@
 import {
-  BoxGeometry,
   Color,
   DirectionalLight,
-  GridHelper,
+  Fog,
   Group,
   HemisphereLight,
-  MathUtils,
   Mesh,
   MeshStandardMaterial,
   PlaneGeometry,
   Scene,
-  Vector2,
 } from 'three';
 import { disposeObject3D } from '../utils/disposeObject3D';
 
-const GROUND_SIZE = 14;
-const MARKER_LIMIT = GROUND_SIZE * 0.43;
+const FOUNDATION_SIZE = 36;
 
+/** Owns the shared scene, restrained indoor lighting, and store foundation. */
 export class SceneManager {
   readonly scene = new Scene();
   private readonly content = new Group();
-  private readonly developmentMarker: Mesh<BoxGeometry, MeshStandardMaterial>;
 
   constructor() {
-    this.scene.background = new Color(0x101814);
+    this.scene.background = new Color(0x34393d);
+    this.scene.fog = new Fog(0x34393d, 24, 48);
     this.scene.add(this.content);
 
-    const hemisphere = new HemisphereLight(0xddeeff, 0x384238, 1.7);
+    const hemisphere = new HemisphereLight(0xe8eef0, 0x6b604e, 1.85);
+    hemisphere.name = 'Ambient Mega Mart light';
     this.content.add(hemisphere);
 
-    const sun = new DirectionalLight(0xfff0d5, 2.2);
-    sun.position.set(4, 7, 3);
-    sun.castShadow = false;
-    this.content.add(sun);
+    const sun = new DirectionalLight(0xfff0d8, 2.1);
+    sun.name = 'Efficient indoor directional fill';
+    sun.position.set(9, 15, 11);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    sun.shadow.camera.left = -18;
+    sun.shadow.camera.right = 18;
+    sun.shadow.camera.top = 18;
+    sun.shadow.camera.bottom = -18;
+    sun.shadow.camera.near = 1;
+    sun.shadow.camera.far = 46;
+    sun.shadow.bias = -0.0008;
+    this.content.add(sun, sun.target);
 
-    const ground = new Mesh(
-      new PlaneGeometry(GROUND_SIZE, GROUND_SIZE),
-      new MeshStandardMaterial({ color: 0x546c59, roughness: 0.95 }),
+    const foundation = new Mesh(
+      new PlaneGeometry(FOUNDATION_SIZE, FOUNDATION_SIZE),
+      new MeshStandardMaterial({ color: 0x4b4a45, roughness: 1 }),
     );
-    ground.name = 'Foundation test ground';
-    ground.rotation.x = -Math.PI / 2;
-    this.content.add(ground);
-
-    const grid = new GridHelper(GROUND_SIZE, 14, 0x9eb6a2, 0x718577);
-    grid.position.y = 0.004;
-    this.content.add(grid);
-
-    this.developmentMarker = new Mesh(
-      new BoxGeometry(1, 1, 1),
-      new MeshStandardMaterial({ color: 0xe19a3b, roughness: 0.55 }),
-    );
-    this.developmentMarker.name = 'Movable development marker';
-    this.developmentMarker.position.y = 0.5;
-    this.content.add(this.developmentMarker);
-  }
-
-  update(deltaSeconds: number, movement: Vector2): void {
-    this.developmentMarker.rotation.y += deltaSeconds * 0.65;
-
-    if (movement.lengthSq() === 0) return;
-
-    const movementSpeed = 3.25;
-    this.developmentMarker.position.x = MathUtils.clamp(
-      this.developmentMarker.position.x + movement.x * movementSpeed * deltaSeconds,
-      -MARKER_LIMIT,
-      MARKER_LIMIT,
-    );
-    this.developmentMarker.position.z = MathUtils.clamp(
-      this.developmentMarker.position.z - movement.y * movementSpeed * deltaSeconds,
-      -MARKER_LIMIT,
-      MARKER_LIMIT,
-    );
+    foundation.name = 'Mega Mart foundation';
+    foundation.rotation.x = -Math.PI / 2;
+    foundation.position.y = -0.055;
+    foundation.receiveShadow = true;
+    this.content.add(foundation);
   }
 
   dispose(): void {

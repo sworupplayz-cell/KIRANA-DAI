@@ -1,17 +1,43 @@
 import {
   ACESFilmicToneMapping,
-  Clock,
   ColorManagement,
+  PCFShadowMap,
   SRGBColorSpace,
+  Timer,
   Vector2,
   WebGLRenderer,
 } from 'three';
+import { PlayerController } from '../player/PlayerController';
 import { DebugOverlay } from '../ui/DebugOverlay';
 import { VirtualJoystick } from '../ui/VirtualJoystick';
+import {
+  MegaMartScene,
+  type MegaMartSceneStats,
+} from '../world/MegaMartScene';
 import { AssetManager } from './AssetManager';
 import { CameraManager } from './CameraManager';
 import { InputManager } from './InputManager';
 import { SceneManager } from './SceneManager';
+
+export interface GameDiagnostics {
+  player: ReturnType<PlayerController['getDiagnostics']>;
+  input: ReturnType<InputManager['getDiagnostics']>;
+  camera: ReturnType<CameraManager['getDiagnostics']>;
+  loopRunning: boolean;
+  shop: MegaMartSceneStats | null;
+  render: {
+    calls: number;
+    triangles: number;
+    textures: number;
+    geometries: number;
+  };
+  canvas: {
+    clientWidth: number;
+    clientHeight: number;
+    bufferWidth: number;
+    bufferHeight: number;
+  };
+}
 
 export class Game {
   readonly assets: AssetManager;
@@ -23,9 +49,12 @@ export class Game {
   private readonly inputManager: InputManager;
   private readonly debugOverlay: DebugOverlay;
   private readonly virtualJoystick: VirtualJoystick;
-  private readonly clock = new Clock(false);
+  private readonly megaMartScene: MegaMartScene;
+  private readonly player: PlayerController;
+  private readonly timer = new Timer();
   private readonly movement = new Vector2();
   private readonly resizeObserver: ResizeObserver;
+  private megaMartStats: MegaMartSceneStats | null = null;
   private isRunning = false;
   private resumeAfterContextRestore = false;
   private disposed = false;
@@ -33,8 +62,10 @@ export class Game {
   constructor(private readonly host: HTMLElement) {
     this.canvas = document.createElement('canvas');
     this.canvas.className = 'game-canvas';
-    this.canvas.setAttribute('aria-label', 'Kirana Dai 3D test scene');
+    this.canvas.tabIndex = 0;
+    this.canvas.setAttribute('aria-label', 'Walkable Nepali Mega Mart environment');
     this.host.replaceChildren(this.canvas);
+    this.timer.connect(document);
 
     this.renderer = this.createRenderer(this.canvas);
     this.sceneManager = new SceneManager();
@@ -45,6 +76,19 @@ export class Game {
     });
     this.debugOverlay = new DebugOverlay(this.host);
     this.virtualJoystick = new VirtualJoystick(this.host, this.inputManager);
+    this.megaMartScene = new MegaMartScene(
+      this.sceneManager.scene,
+      this.assets,
+      ({ loaded, failed, total, currentLabel }) => {
+        this.debugOverlay.setAssetStatus(
+          `Mega Mart ${loaded + failed}/${total} · loading ${currentLabel}`,
+          failed > 0,
+        );
+      },
+    );
+    this.player = new PlayerController(this.megaMartScene.collisionWorld);
+    this.cameraManager.update(this.player.position);
+    void this.loadMegaMart();
 
     this.canvas.addEventListener('webglcontextlost', this.onContextLost);
     this.canvas.addEventListener('webglcontextrestored', this.onContextRestored);
@@ -57,7 +101,7 @@ export class Game {
   start(): void {
     if (this.isRunning || this.disposed) return;
     this.isRunning = true;
-    this.clock.start();
+    this.timer.reset();
     this.renderer.setAnimationLoop(this.tick);
   }
 
@@ -65,7 +109,28 @@ export class Game {
     if (!this.isRunning) return;
     this.isRunning = false;
     this.renderer.setAnimationLoop(null);
-    this.clock.stop();
+  }
+
+  getDiagnostics(): GameDiagnostics {
+    return {
+      player: this.player.getDiagnostics(),
+      input: this.inputManager.getDiagnostics(),
+      camera: this.cameraManager.getDiagnostics(),
+      loopRunning: this.isRunning,
+      shop: this.megaMartStats,
+      render: {
+        calls: this.renderer.info.render.calls,
+        triangles: this.renderer.info.render.triangles,
+        textures: this.renderer.info.memory.textures,
+        geometries: this.renderer.info.memory.geometries,
+      },
+      canvas: {
+        clientWidth: this.canvas.clientWidth,
+        clientHeight: this.canvas.clientHeight,
+        bufferWidth: this.canvas.width,
+        bufferHeight: this.canvas.height,
+      },
+    };
   }
 
   dispose(): void {
@@ -75,15 +140,38 @@ export class Game {
     this.resizeObserver.disconnect();
     this.canvas.removeEventListener('webglcontextlost', this.onContextLost);
     this.canvas.removeEventListener('webglcontextrestored', this.onContextRestored);
+    this.megaMartScene.dispose();
     this.virtualJoystick.dispose();
     this.debugOverlay.dispose();
     this.inputManager.dispose();
     this.cameraManager.dispose();
     this.assets.disposeAll();
     this.sceneManager.dispose();
+    this.timer.dispose();
     this.renderer.renderLists.dispose();
     this.renderer.dispose();
     this.canvas.remove();
+  }
+
+  private async loadMegaMart(): Promise<void> {
+    const stats = await this.megaMartScene.load();
+    if (this.disposed) return;
+    this.megaMartStats = stats;
+
+    const summary = [
+      `Mega Mart ${stats.loaded}/${stats.loaded + stats.failed}`,
+      `${stats.departments} zones`,
+      `${stats.modelPlacements} placed`,
+      `${stats.meshes} meshes`,
+      `${stats.textures} textures`,
+      `${stats.triangles.toLocaleString()} tris`,
+      `${stats.activeMixers} mixers`,
+    ].join(' · ');
+    this.debugOverlay.setAssetStatus(summary, stats.failed > 0);
+
+    if (stats.errors.length > 0) {
+      console.warn('Mega Mart completed with asset failures.', stats.errors);
+    }
   }
 
   private createRenderer(canvas: HTMLCanvasElement): WebGLRenderer {
@@ -102,15 +190,19 @@ export class Game {
     renderer.outputColorSpace = SRGBColorSpace;
     renderer.toneMapping = ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1;
-    renderer.shadowMap.enabled = false;
+    // Keep one restrained shadow pass on desktop; mobile retains the same lighting
+    // without the duplicate shadow draw cost.
+    renderer.shadowMap.enabled = !isTouchFirst;
+    renderer.shadowMap.type = PCFShadowMap;
     return renderer;
   }
 
-  private readonly tick = (): void => {
-    const deltaSeconds = Math.min(this.clock.getDelta(), 0.1);
+  private readonly tick = (time: number): void => {
+    this.timer.update(time);
+    const deltaSeconds = Math.min(this.timer.getDelta(), 0.1);
     this.inputManager.getMovement(this.movement);
-    this.sceneManager.update(deltaSeconds, this.movement);
-    this.cameraManager.update(deltaSeconds);
+    this.player.update(deltaSeconds, this.movement, this.cameraManager.getYaw());
+    this.cameraManager.update(this.player.position);
     this.renderer.render(this.sceneManager.scene, this.cameraManager.camera);
     this.debugOverlay.update(deltaSeconds, this.renderer);
   };

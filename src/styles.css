@@ -52,6 +52,21 @@ select {
   touch-action: none;
 }
 
+#app::after {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  width: 0.28rem;
+  height: 0.28rem;
+  border: 1px solid rgb(255 248 224 / 72%);
+  border-radius: 50%;
+  box-shadow: 0 0 0.35rem rgb(0 0 0 / 55%);
+  content: "";
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
 .boot-message,
 .startup-error {
   position: absolute;
@@ -112,6 +127,15 @@ select {
   letter-spacing: 0.09em;
 }
 
+.debug-overlay .asset-status {
+  max-width: min(32rem, calc(100vw - 2.5rem));
+  color: #cbd8cb;
+}
+
+.debug-overlay .asset-status.has-error {
+  color: #ffb5a8;
+}
+
 .debug-overlay .control-hint {
   margin-top: 0.15rem;
   color: #b8c7b9;
@@ -161,6 +185,10 @@ select {
 }
 
 @media (hover: none) and (pointer: coarse) {
+  #app::after {
+    display: none;
+  }
+
   .virtual-joystick {
     display: block;
   }
@@ -171,7 +199,7 @@ select {
 
   .debug-overlay .control-hint::after {
     font-size: 0.7rem;
-    content: "Joystick move · drag orbit · pinch zoom";
+    content: "Joystick walk · drag the scene to look";
   }
 }
 
