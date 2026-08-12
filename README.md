@@ -24,13 +24,13 @@ The development and preview servers bind to `0.0.0.0` for device and hosted-prev
 - **Desktop:** Click the store once to focus the embedded game, then use WASD or arrow keys to walk. Drag the scene to look, or click once for pointer-lock mouse look. Press Escape to release the pointer.
 - **Mobile:** Use the virtual joystick to walk and drag elsewhere on the scene to look.
 
-The camera retains a 1.64 m human eye height. Movement stays on the store floor and uses lightweight circle-vs-AABB collision with sliding around walls, department fixtures, checkout lanes, service counters, warehouse racks, and staff furniture.
+The camera retains a 1.64 m human eye height. Movement stays on the store floor and uses lightweight circle-vs-AABB collision with sliding around walls, department fixtures, the checkout workstation, service counters, warehouse racks, and staff furniture.
 
 ## Phase 2 environment
 
 - A roughly **24 × 30 m** indoor store replaces the former compact 8 × 6 m kirana and its outdoor road scene.
 - A wide central spine and three cross aisles connect long grocery and drinks/snacks aisles to home/daily goods, books/stationery, and electronics arrangements.
-- The front contains four navigable checkout lanes, a separate customer-service counter, carts, and baskets.
+- The front contains one detailed imported checkout workstation with distinct customer/cashier sides and future bagging/payment space, plus a separate customer-service counter, carts, and two entrance baskets.
 - A rear partition provides physical access to a stocked warehouse and a distinct staff room.
 - Department signs use the original fictional **Himal Mega Mart** identity with Nepali/Latin-script wayfinding; no real logo or retailer branding is copied.
 - Repeated floor, wall, shelf, product, carton, and fixture geometry is instanced. Mobile keeps the existing DPR cap and omits the desktop shadow pass to reduce duplicate draws.

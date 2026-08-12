@@ -321,35 +321,22 @@ export class MegaMartScene {
       { position: [4.95, 0.05, -3.05], scale: [5, 2.4, 2] },
     );
 
-    const checkoutCounters: AssetPlacement[] = [];
-    for (const x of [3, 5.3, 7.6, 9.9]) {
-      checkoutCounters.push(
-        {
-          position: [x, 0.05, 10.25],
-          scale: [2.4, 2.4, 2.4],
-          rotationY: Math.PI / 2,
-        },
-        {
-          position: [x, 0.05, 11.28],
-          scale: [2.4, 2.4, 2.4],
-          rotationY: Math.PI / 2,
-        },
-      );
-    }
-    for (const x of [-9.25, -8.23, -7.21]) {
-      checkoutCounters.push({ position: [x, 0.05, 11.45], scale: [2.4, 2.4, 2.4] });
-    }
-
-    const registerPlacements: AssetPlacement[] = [3, 5.3, 7.6, 9.9].map((x) => ({
-      position: [x, 1.07, 10.45] as const,
-      scale: [0.54, 0.54, 0.54] as const,
-      rotationY: Math.PI,
+    const serviceCounters: AssetPlacement[] = [-9.25, -8.23, -7.21].map((x) => ({
+      position: [x, 0.05, 11.45],
+      scale: [2.4, 2.4, 2.4] as const,
     }));
-    registerPlacements.push({
-      position: [-8.2, 1.07, 11.42],
-      scale: [0.54, 0.54, 0.54],
-      rotationY: Math.PI,
-    });
+
+    const primaryCheckout: AssetPlacement[] = [{
+      position: [6.5, 0.05, 10.6],
+      scale: [0.86, 0.72, 1.02],
+      rotationY: Math.PI / 2,
+    }];
+
+    const primaryRegister: AssetPlacement[] = [{
+      position: [6.26, 1.01, 10.94],
+      scale: [0.48, 0.48, 0.48],
+      rotationY: Math.PI / 2,
+    }];
 
     const productPlacements = this.createProductPlacements();
     const productTasks: AssetTask[] = PRODUCT_DEFINITIONS.map(([label, url]) => ({
@@ -471,16 +458,23 @@ export class MegaMartScene {
         receiveShadow: true,
       },
       {
-        label: 'Checkout and service counters',
+        label: 'Customer service counter',
         url: '/assets/shop/furniture/kitchenBar.glb',
-        placements: checkoutCounters,
+        placements: serviceCounters,
         castShadow: true,
         receiveShadow: true,
       },
       {
-        label: 'Cash registers',
-        url: '/assets/shop/mini-market/cash-register.glb',
-        placements: registerPlacements,
+        label: 'Primary imported checkout counter',
+        url: '/assets/supermarket/cashier/checkout-counter.glb',
+        placements: primaryCheckout,
+        castShadow: true,
+        receiveShadow: true,
+      },
+      {
+        label: 'Primary imported cash register',
+        url: '/assets/supermarket/cashier/cash-register.glb',
+        placements: primaryRegister,
         castShadow: true,
       },
       ...productTasks,
@@ -530,12 +524,11 @@ export class MegaMartScene {
         castShadow: true,
       },
       {
-        label: 'Shopping baskets',
-        url: '/assets/shop/mini-market/shopping-basket.glb',
+        label: 'Imported entrance shopping baskets',
+        url: '/assets/supermarket/retail/shopping-basket.glb',
         placements: [
-          { position: [-6.45, 0.05, 10.65], scale: [1.5, 1.5, 1.5] },
-          { position: [-6.45, 0.38, 10.65], scale: [1.5, 1.5, 1.5], rotationY: 0.12 },
-          { position: [-6.45, 0.71, 10.65], scale: [1.5, 1.5, 1.5], rotationY: -0.08 },
+          { position: [-6.35, 0.05, 11.05], scale: [0.82, 0.82, 0.82], rotationY: 0.08 },
+          { position: [-6.38, 0.39, 11.02], scale: [0.82, 0.82, 0.82], rotationY: -0.08 },
         ],
         castShadow: true,
       },
@@ -776,6 +769,10 @@ export class MegaMartScene {
       this.addBox(`Cross aisle marker ${z}`, [20.6, 0.018, 0.09], [0, 0.066, z], route, false, true);
     }
 
+    this.addBox('Primary cashier bagging shelf', [0.86, 0.82, 0.62], [6.5, 0.46, 11.88], partition, true, true);
+    this.addBox('Cashier-side floor marker', [1.35, 0.018, 2.8], [5.3, 0.067, 10.55], route, false, true);
+    this.addBox('Customer-side floor marker', [1.35, 0.018, 3.2], [7.7, 0.067, 10.25], route, false, true);
+
     const lightGeometry = new BoxGeometry(3.8, 0.035, 0.5);
     this.ownedGeometries.add(lightGeometry);
     const lightPositions: Array<readonly [number, number, number]> = [];
@@ -935,12 +932,11 @@ export class MegaMartScene {
     add('Electronics table 2', 8.5, 10.6, -5.25, -4.15);
     add('Electronics table 3', 6.25, 8.35, -7.05, -5.95);
 
-    for (const [index, x] of [3, 5.3, 7.6, 9.9].entries()) {
-      add(`Checkout lane ${index + 1}`, x - 0.38, x + 0.38, 9.66, 11.89);
-    }
+    add('Primary imported checkout counter', 6.02, 6.98, 9.62, 11.57);
+    add('Primary cashier bagging shelf', 6.02, 6.98, 11.57, 12.22);
     add('Customer service counter', -9.8, -6.68, 11.04, 11.88);
     add('Shopping carts', -10.78, -8.75, 11.35, 13.65);
-    add('Basket stack', -6.82, -6.08, 10.28, 11.02);
+    add('Imported basket collection', -6.72, -5.98, 10.7, 11.38);
 
     add('Warehouse wall west', -12, -1.3, -8.86, -8.64);
     add('Warehouse wall east', 1.3, 6.8, -8.86, -8.64);

@@ -16,7 +16,7 @@ export class DebugOverlay {
     this.element.setAttribute('aria-live', 'polite');
 
     const title = document.createElement('strong');
-    title.textContent = 'PHASE 2 · NEPALI MEGA MART';
+    title.textContent = 'PHASE 2B.0 · CASHIER WORKSTATION FOUNDATION';
 
     this.statusElement = document.createElement('span');
     this.statusElement.textContent = 'Renderer starting…';

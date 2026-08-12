@@ -167,15 +167,15 @@ The incidental fences, paths, planter, and trees belong to City Kit (Suburban); 
 
 The active Phase 2 world is one approximately 24×30 m indoor Mega Mart. It replaces the old 8×6 m kirana shell, road tile, neighboring building, planter, and tree. The normal runtime loads no road, suburban-building, exterior-prop, or character GLBs.
 
-The plan uses a wide central spine and three cross aisles rather than one undivided room. Grocery and drinks/snacks use long back-to-back shelf runs; home/daily uses lower islands; books/stationery combines low displays and a wall run; electronics uses separated display tables. The front has four checkout lanes, customer service, carts, and baskets. A rear partition has separate, traversable warehouse and staff openings. Fictional **Himal Mega Mart** signs use original Nepali/Latin-script labels and share one canvas atlas.
+The plan uses a wide central spine and three cross aisles rather than one undivided room. Grocery and drinks/snacks use long back-to-back shelf runs; home/daily uses lower islands; books/stationery combines low displays and a wall run; electronics uses separated display tables. Before Phase 2B.0, the front used four placeholder checkout lanes; the current front uses the single detailed workstation documented below, together with customer service, carts, and two imported baskets. A rear partition has separate, traversable warehouse and staff openings. Fictional **Himal Mega Mart** signs use original Nepali/Latin-script labels and share one canvas atlas.
 
 All broad repeats use `InstancedMesh`. The integrated model set includes modular floor/wall pieces, scalable one-primitive bookcases, Food Kit shelf facings, restrained Mini Market fixtures, home/electronics displays, books, and deliberately grounded cartons. Mobile preserves the 1.5 DPR cap and disables the duplicate desktop shadow pass while keeping the same lighting/material design.
 
 Collision uses a 0.28 m player circle against named XZ rectangles and indoor bounds. The layout protects the central spine, department approach aisles, checkout gaps, warehouse opening, and staff doorway while blocking walls, shelf runs, counters, cold fixtures, warehouse racks/cartons, and staff furniture. The spawn is inside at `(0, 0, 13.1)` with a 1.64 m camera eye height.
 
-The final production build loaded all **41/41 selected GLB URLs** with no asset failures. Scene traversal counted **641 model placements**, **89 renderable mesh objects**, **89 geometries**, **66 material objects**, **26 runtime texture objects**, **65,356 authored triangles**, zero animation mixers, and 47 colliders. The high placement-to-mesh ratio comes from instanced floor, walls, shelf bays, shelf stock, cartons, counters, and repeated fixtures.
+The **pre-Phase 2B.0 baseline** production build loaded all **41/41 selected GLB URLs** with no asset failures. Scene traversal counted **641 model placements**, **89 renderable mesh objects**, **89 geometries**, **66 material objects**, **26 runtime texture objects**, **65,356 authored triangles**, zero animation mixers, and 47 colliders. The high placement-to-mesh ratio comes from instanced floor, walls, shelf bays, shelf stock, cartons, counters, and repeated fixtures.
 
-At the initial 1280×800 desktop view, production diagnostics sampled up to **135 calls / 95,703 rendered triangles** with the single desktop shadow pass. At approximately 390×844 mobile emulation, the backing buffer was correctly capped at **585×1266** (DPR 1.5) and sampled **59 calls / 59,684 rendered triangles** without the optional shadow pass. Packaged Chromium reported approximately 20–22 FPS under software WebGL; this is a smoke-test signal, not a physical-phone benchmark. Desktop and mobile runs had no console errors, page errors, failed asset requests, or missing textures.
+At that baseline's initial 1280×800 desktop view, production diagnostics sampled up to **135 calls / 95,703 rendered triangles** with the single desktop shadow pass. At approximately 390×844 mobile emulation, the backing buffer was correctly capped at **585×1266** (DPR 1.5) and sampled **59 calls / 59,684 rendered triangles** without the optional shadow pass. Packaged Chromium reported approximately 20–22 FPS under software WebGL; this is a smoke-test signal, not a physical-phone benchmark. Desktop and mobile runs had no console errors, page errors, failed asset requests, or missing textures. Current Phase 2B.0 diagnostics and deltas are recorded below.
 
 ## Supermercado conversion pack
 
@@ -184,6 +184,20 @@ At the initial 1280×800 desktop view, production diagnostics sampled up to **13
 The final pack totals 1,598,000 bytes, 59,854 triangles, 66 mesh primitives/draw calls, 61 used materials, and zero textures. The source archive contains no texture images, license, creator, or source record. License status is **LICENSE VERIFICATION REQUIRED**. The shopping cart remains the primary performance concern at 19,958 triangles and five draws after a conservative 25% simplification; the best repeat shelf is `shelf-marker.glb` at 1,476 triangles and one draw.
 
 See `SUPERMARKET_ASSET_IMPORT.md` for per-model dimensions, draw costs, paths, conversion settings, optimization deltas, visual/runtime checks, and the source archive hash.
+
+## Phase 2B.0 cashier imports
+
+The exact incoming sources, conversion decisions, bounds/origins, hashes, ZIP evidence, full validator results, and desktop/mobile route evidence are recorded in `CASHIER_ASSET_IMPORT.md`.
+
+| Runtime asset | Tris | Meshes / primitives | Materials | Textures | Raw dimensions (X×Y×Z m) | Bytes | Status |
+|---|---:|---:|---:|---:|---:|---:|---|
+| `supermarket/cashier/checkout-counter.glb` | 14,599 | 2 / 2 | 2 | 0 | 2.20039×1.32953×0.82373 | 703,208 | Runtime verified; **LICENSE VERIFICATION REQUIRED** |
+| `supermarket/cashier/cash-register.glb` | 9,927 | 2 / 3 | 2 | 6×512² JPEG | 0.60049×0.62136×0.62420 | 756,428 | Runtime verified; CC0 evidence retained in incoming ZIP |
+| `supermarket/retail/shopping-basket.glb` | 496 | 1 / 1 | 1 | 0 | 0.51200×0.40856×0.06294 | 31,044 | Runtime verified; **LICENSE VERIFICATION REQUIRED** |
+
+Checkout geometry was converted with FBX2glTF 0.9.7 and conservatively deduplicated/welded/pruned without simplification. The register retains all material channels with six embedded maps reduced from 2048² to 512² and adds valid MikkTSpace tangents for its normal maps. The basket retains its geometry, vertex colors, and material state while removing four redundant solid 8² textures, its deprecated optional specular/glossiness representation, and the resulting unused UV data. Combined final runtime size is 1,490,680 bytes, down 53.78% from the three initial GLB inputs/conversions with all 25,022 triangles preserved.
+
+The isolated `?cashierTest=1` arrangement loaded all three assets on desktop and mobile with no failures, console/network errors, missing textures, overflow, or floor-contact/orientation fault. Production now loads one imported workstation and register plus two imported baskets, with customer/cashier floor areas, a future bagging/payment/receipt shelf, and simple AABB collision. The active production diagnostics are 42/42 GLB URLs, 629 model placements, 96 mesh objects/geometries, 69 materials, 30 runtime textures, 88,423 authored triangles, 45 colliders, and zero animation mixers.
 
 ## Complete uploaded GLB inventory
 

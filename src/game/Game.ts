@@ -10,6 +10,7 @@ import {
 import { PlayerController } from '../player/PlayerController';
 import { DebugOverlay } from '../ui/DebugOverlay';
 import { VirtualJoystick } from '../ui/VirtualJoystick';
+import { CashierAssetTestScene } from '../world/CashierAssetTestScene';
 import {
   MegaMartScene,
   type MegaMartSceneStats,
@@ -18,6 +19,10 @@ import { AssetManager } from './AssetManager';
 import { CameraManager } from './CameraManager';
 import { InputManager } from './InputManager';
 import { SceneManager } from './SceneManager';
+
+export interface GameOptions {
+  sceneMode?: 'mega-mart' | 'cashier-test';
+}
 
 export interface GameDiagnostics {
   player: ReturnType<PlayerController['getDiagnostics']>;
@@ -49,7 +54,7 @@ export class Game {
   private readonly inputManager: InputManager;
   private readonly debugOverlay: DebugOverlay;
   private readonly virtualJoystick: VirtualJoystick;
-  private readonly megaMartScene: MegaMartScene;
+  private readonly worldScene: MegaMartScene | CashierAssetTestScene;
   private readonly player: PlayerController;
   private readonly timer = new Timer();
   private readonly movement = new Vector2();
@@ -59,7 +64,8 @@ export class Game {
   private resumeAfterContextRestore = false;
   private disposed = false;
 
-  constructor(private readonly host: HTMLElement) {
+  constructor(private readonly host: HTMLElement, options: GameOptions = {}) {
+    const sceneMode = options.sceneMode ?? 'mega-mart';
     this.canvas = document.createElement('canvas');
     this.canvas.className = 'game-canvas';
     this.canvas.tabIndex = 0;
@@ -76,19 +82,26 @@ export class Game {
     });
     this.debugOverlay = new DebugOverlay(this.host);
     this.virtualJoystick = new VirtualJoystick(this.host, this.inputManager);
-    this.megaMartScene = new MegaMartScene(
-      this.sceneManager.scene,
-      this.assets,
-      ({ loaded, failed, total, currentLabel }) => {
-        this.debugOverlay.setAssetStatus(
-          `Mega Mart ${loaded + failed}/${total} · loading ${currentLabel}`,
-          failed > 0,
-        );
-      },
+    const onProgress = ({ loaded, failed, total, currentLabel }: {
+      loaded: number;
+      failed: number;
+      total: number;
+      currentLabel: string;
+    }): void => {
+      this.debugOverlay.setAssetStatus(
+        `${sceneMode === 'cashier-test' ? 'Cashier test' : 'Mega Mart'} ${loaded + failed}/${total} · loading ${currentLabel}`,
+        failed > 0,
+      );
+    };
+    this.worldScene = sceneMode === 'cashier-test'
+      ? new CashierAssetTestScene(this.sceneManager.scene, this.assets, onProgress)
+      : new MegaMartScene(this.sceneManager.scene, this.assets, onProgress);
+    this.player = new PlayerController(
+      this.worldScene.collisionWorld,
+      sceneMode === 'cashier-test' ? [0, 0, 4.6] : undefined,
     );
-    this.player = new PlayerController(this.megaMartScene.collisionWorld);
     this.cameraManager.update(this.player.position);
-    void this.loadMegaMart();
+    void this.loadWorld(sceneMode);
 
     this.canvas.addEventListener('webglcontextlost', this.onContextLost);
     this.canvas.addEventListener('webglcontextrestored', this.onContextRestored);
@@ -140,7 +153,7 @@ export class Game {
     this.resizeObserver.disconnect();
     this.canvas.removeEventListener('webglcontextlost', this.onContextLost);
     this.canvas.removeEventListener('webglcontextrestored', this.onContextRestored);
-    this.megaMartScene.dispose();
+    this.worldScene.dispose();
     this.virtualJoystick.dispose();
     this.debugOverlay.dispose();
     this.inputManager.dispose();
@@ -153,13 +166,13 @@ export class Game {
     this.canvas.remove();
   }
 
-  private async loadMegaMart(): Promise<void> {
-    const stats = await this.megaMartScene.load();
+  private async loadWorld(sceneMode: NonNullable<GameOptions['sceneMode']>): Promise<void> {
+    const stats = await this.worldScene.load();
     if (this.disposed) return;
     this.megaMartStats = stats;
 
     const summary = [
-      `Mega Mart ${stats.loaded}/${stats.loaded + stats.failed}`,
+      `${sceneMode === 'cashier-test' ? 'Cashier test' : 'Mega Mart'} ${stats.loaded}/${stats.loaded + stats.failed}`,
       `${stats.departments} zones`,
       `${stats.modelPlacements} placed`,
       `${stats.meshes} meshes`,
@@ -170,7 +183,7 @@ export class Game {
     this.debugOverlay.setAssetStatus(summary, stats.failed > 0);
 
     if (stats.errors.length > 0) {
-      console.warn('Mega Mart completed with asset failures.', stats.errors);
+      console.warn(`${sceneMode === 'cashier-test' ? 'Cashier test' : 'Mega Mart'} completed with asset failures.`, stats.errors);
     }
   }
 

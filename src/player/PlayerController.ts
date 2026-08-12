@@ -14,13 +14,18 @@ export interface PlayerDiagnostics {
 
 /** Human-scale first-person locomotion with acceleration and collision sliding. */
 export class PlayerController {
-  readonly position = new Vector3(0, 0, 13.1);
+  readonly position: Vector3;
   private readonly velocity = new Vector2();
   private readonly displacement = new Vector3();
   private readonly resolvedPosition = new Vector3();
   private lastCollisions: string[] = [];
 
-  constructor(private readonly collisionWorld: CollisionWorld) {}
+  constructor(
+    private readonly collisionWorld: CollisionWorld,
+    spawn: readonly [number, number, number] = [0, 0, 13.1],
+  ) {
+    this.position = new Vector3(...spawn);
+  }
 
   update(deltaSeconds: number, movement: Vector2, yaw: number): void {
     const forwardX = -Math.sin(yaw);

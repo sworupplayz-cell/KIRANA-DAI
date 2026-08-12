@@ -43,7 +43,10 @@ function disposeGame(): void {
 }
 
 try {
-  game = new Game(host);
+  const sceneMode = new URLSearchParams(window.location.search).has('cashierTest')
+    ? 'cashier-test'
+    : 'mega-mart';
+  game = new Game(host, { sceneMode });
   game.start();
   exposeDebugDiagnostics();
 } catch (error) {
