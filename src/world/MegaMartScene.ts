@@ -21,6 +21,7 @@ import {
 } from 'three';
 import type { AssetManager } from '../game/AssetManager';
 import { CollisionWorld } from '../systems/CollisionWorld';
+import type { CashierInteractionScene, CashierInteractionTarget } from './CashierInteractionTarget';
 
 interface AssetPlacement {
   position: readonly [number, number, number];
@@ -42,6 +43,12 @@ interface SignDefinition {
   accent: string;
   position: readonly [number, number, number];
   width?: number;
+}
+
+interface DetailBox {
+  position: readonly [number, number, number];
+  scale: readonly [number, number, number];
+  rotationY?: number;
 }
 
 export interface MegaMartLoadProgress {
@@ -153,7 +160,7 @@ const DEPARTMENT_SIGNS: SignDefinition[] = [
 ];
 
 /** The Phase 2 persistent indoor Nepali Mega Mart environment. */
-export class MegaMartScene {
+export class MegaMartScene implements CashierInteractionScene {
   readonly collisionWorld = new CollisionWorld({
     minX: -11.42,
     maxX: 11.42,
@@ -210,6 +217,15 @@ export class MegaMartScene {
     );
 
     return this.collectStats(loaded, failed, errors);
+  }
+
+  getCashierInteractionTarget(): CashierInteractionTarget {
+    return {
+      playerPosition: [5.35, 0, 10.92],
+      yaw: -Math.PI / 2,
+      pitch: -0.31,
+      activationRadius: 1.3,
+    };
   }
 
   dispose(): void {
@@ -328,17 +344,27 @@ export class MegaMartScene {
 
     const primaryCheckout: AssetPlacement[] = [{
       position: [6.5, 0.05, 10.6],
-      scale: [0.86, 0.72, 1.02],
+      scale: [0.76, 0.76, 0.76],
       rotationY: Math.PI / 2,
     }];
 
     const primaryRegister: AssetPlacement[] = [{
-      position: [6.26, 1.01, 10.94],
-      scale: [0.48, 0.48, 0.48],
-      rotationY: Math.PI / 2,
+      position: [6.38, 1.075, 10.91],
+      scale: [0.46, 0.46, 0.46],
+      rotationY: -Math.PI / 2,
     }];
 
     const productPlacements = this.createProductPlacements();
+    productPlacements.get('/assets/products/food-kit/carton-small.glb')?.push({
+      position: [6.45, 1.092, 9.9],
+      scale: [0.42, 0.42, 0.42],
+      rotationY: 0.12,
+    });
+    productPlacements.get('/assets/products/food-kit/can-small.glb')?.push({
+      position: [6.56, 1.092, 10.16],
+      scale: [0.38, 0.38, 0.38],
+      rotationY: -0.08,
+    });
     const productTasks: AssetTask[] = PRODUCT_DEFINITIONS.map(([label, url]) => ({
       label,
       url,
@@ -749,7 +775,38 @@ export class MegaMartScene {
       roughness: 0.45,
       metalness: 0,
     });
-    this.ownedMaterials.add(ceiling).add(partition).add(staffPartition).add(route).add(lightPanel);
+    const workstationDark = new MeshStandardMaterial({
+      color: 0x172126,
+      roughness: 0.84,
+      metalness: 0.08,
+    });
+    const workstationMetal = new MeshStandardMaterial({
+      color: 0x718085,
+      roughness: 0.42,
+      metalness: 0.38,
+    });
+    const scannerGlass = new MeshStandardMaterial({
+      color: 0x183e46,
+      emissive: 0x0b6975,
+      emissiveIntensity: 0.38,
+      roughness: 0.24,
+      metalness: 0.12,
+    });
+    const staffMat = new MeshStandardMaterial({
+      color: 0x294039,
+      roughness: 0.96,
+      metalness: 0,
+    });
+    this.ownedMaterials
+      .add(ceiling)
+      .add(partition)
+      .add(staffPartition)
+      .add(route)
+      .add(lightPanel)
+      .add(workstationDark)
+      .add(workstationMetal)
+      .add(scannerGlass)
+      .add(staffMat);
 
     this.addBox(
       'Mega Mart ceiling',
@@ -769,9 +826,13 @@ export class MegaMartScene {
       this.addBox(`Cross aisle marker ${z}`, [20.6, 0.018, 0.09], [0, 0.066, z], route, false, true);
     }
 
-    this.addBox('Primary cashier bagging shelf', [0.86, 0.82, 0.62], [6.5, 0.46, 11.88], partition, true, true);
-    this.addBox('Cashier-side floor marker', [1.35, 0.018, 2.8], [5.3, 0.067, 10.55], route, false, true);
-    this.addBox('Customer-side floor marker', [1.35, 0.018, 3.2], [7.7, 0.067, 10.25], route, false, true);
+    this.addCashierWorkstationDetails(
+      workstationDark,
+      workstationMetal,
+      scannerGlass,
+      staffMat,
+      route,
+    );
 
     const lightGeometry = new BoxGeometry(3.8, 0.035, 0.5);
     this.ownedGeometries.add(lightGeometry);
@@ -807,6 +868,80 @@ export class MegaMartScene {
     }
 
     this.addSignAtlas();
+  }
+
+  private addCashierWorkstationDetails(
+    dark: Material,
+    metal: Material,
+    glass: Material,
+    mat: Material,
+    route: Material,
+  ): void {
+    const unitBox = new BoxGeometry(1, 1, 1);
+    this.ownedGeometries.add(unitBox);
+
+    this.addDetailInstances('Cashier dark fixtures', unitBox, dark, [
+      { position: [6.5, 1.071, 10.03], scale: [0.53, 0.024, 0.7] },
+      { position: [6.5, 0.75, 11.66], scale: [0.5, 0.5, 0.42] },
+      { position: [6.31, 0.89, 10.91], scale: [0.024, 0.36, 0.024] },
+      { position: [-6.35, 0.065, 11.05], scale: [0.78, 0.03, 0.5] },
+      { position: [-6.69, 0.41, 10.85], scale: [0.025, 0.72, 0.025] },
+      { position: [-6.01, 0.41, 10.85], scale: [0.025, 0.72, 0.025] },
+      { position: [-6.69, 0.41, 11.25], scale: [0.025, 0.72, 0.025] },
+      { position: [-6.01, 0.41, 11.25], scale: [0.025, 0.72, 0.025] },
+      { position: [-6.35, 0.77, 10.85], scale: [0.7, 0.025, 0.025] },
+      { position: [-6.35, 0.77, 11.25], scale: [0.7, 0.025, 0.025] },
+    ]);
+
+    this.addDetailInstances('Cashier metal work surfaces', unitBox, metal, [
+      { position: [6.5, 1.086, 10.58], scale: [0.55, 0.045, 0.3] },
+      { position: [6.5, 1.02, 11.66], scale: [0.68, 0.055, 0.56] },
+      { position: [6.5, 1.072, 11.93], scale: [0.68, 0.065, 0.035] },
+      { position: [6.42, 1.078, 11.18], scale: [0.28, 0.025, 0.19] },
+      { position: [6.5, 1.086, 9.69], scale: [0.48, 0.055, 0.04] },
+    ]);
+
+    this.addDetailInstances('Cashier scanner glass', unitBox, glass, [
+      { position: [6.5, 1.113, 10.58], scale: [0.3, 0.012, 0.17] },
+    ]);
+
+    this.addDetailInstances('Cashier anti-fatigue mat', unitBox, mat, [
+      { position: [5.34, 0.066, 10.86], scale: [1.02, 0.018, 1.52] },
+    ]);
+
+    this.addDetailInstances('Checkout queue direction marker', unitBox, route, [
+      { position: [7.65, 0.067, 10.38], scale: [0.055, 0.018, 1.22] },
+      { position: [7.54, 0.067, 9.72], scale: [0.055, 0.018, 0.34], rotationY: -Math.PI / 4 },
+      { position: [7.76, 0.067, 9.72], scale: [0.055, 0.018, 0.34], rotationY: Math.PI / 4 },
+    ]);
+  }
+
+  private addDetailInstances(
+    name: string,
+    geometry: BufferGeometry,
+    material: Material,
+    details: readonly DetailBox[],
+  ): void {
+    const instances = new InstancedMesh(geometry, material, details.length);
+    instances.name = name;
+    instances.castShadow = false;
+    instances.receiveShadow = true;
+    const matrix = new Matrix4();
+    const translation = new Vector3();
+    const scale = new Vector3();
+    const rotation = new Quaternion();
+    const yAxis = new Vector3(0, 1, 0);
+    details.forEach((detail, index) => {
+      translation.fromArray(detail.position);
+      scale.fromArray(detail.scale);
+      rotation.setFromAxisAngle(yAxis, detail.rotationY ?? 0);
+      matrix.compose(translation, rotation, scale);
+      instances.setMatrixAt(index, matrix);
+    });
+    instances.instanceMatrix.needsUpdate = true;
+    instances.computeBoundingBox();
+    instances.computeBoundingSphere();
+    this.root.add(instances);
   }
 
   private addSignAtlas(): void {
@@ -932,8 +1067,8 @@ export class MegaMartScene {
     add('Electronics table 2', 8.5, 10.6, -5.25, -4.15);
     add('Electronics table 3', 6.25, 8.35, -7.05, -5.95);
 
-    add('Primary imported checkout counter', 6.02, 6.98, 9.62, 11.57);
-    add('Primary cashier bagging shelf', 6.02, 6.98, 11.57, 12.22);
+    add('Primary imported checkout counter', 6.16, 6.84, 9.72, 11.46);
+    add('Primary cashier bagging shelf', 6.14, 6.86, 11.42, 11.97);
     add('Customer service counter', -9.8, -6.68, 11.04, 11.88);
     add('Shopping carts', -10.78, -8.75, 11.35, 13.65);
     add('Imported basket collection', -6.72, -5.98, 10.7, 11.38);

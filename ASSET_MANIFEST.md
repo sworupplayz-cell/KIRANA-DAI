@@ -197,7 +197,15 @@ The exact incoming sources, conversion decisions, bounds/origins, hashes, ZIP ev
 
 Checkout geometry was converted with FBX2glTF 0.9.7 and conservatively deduplicated/welded/pruned without simplification. The register retains all material channels with six embedded maps reduced from 2048² to 512² and adds valid MikkTSpace tangents for its normal maps. The basket retains its geometry, vertex colors, and material state while removing four redundant solid 8² textures, its deprecated optional specular/glossiness representation, and the resulting unused UV data. Combined final runtime size is 1,490,680 bytes, down 53.78% from the three initial GLB inputs/conversions with all 25,022 triangles preserved.
 
-The isolated `?cashierTest=1` arrangement loaded all three assets on desktop and mobile with no failures, console/network errors, missing textures, overflow, or floor-contact/orientation fault. Production now loads one imported workstation and register plus two imported baskets, with customer/cashier floor areas, a future bagging/payment/receipt shelf, and simple AABB collision. The active production diagnostics are 42/42 GLB URLs, 629 model placements, 96 mesh objects/geometries, 69 materials, 30 runtime textures, 88,423 authored triangles, 45 colliders, and zero animation mixers.
+The isolated `?cashierTest=1` arrangement loaded all three assets on desktop and mobile with no failures, console/network errors, missing textures, overflow, or floor-contact/orientation fault. Phase 2B.0 production loaded one imported workstation and register plus two imported baskets, with customer/cashier floor areas, a future bagging/payment/receipt shelf, and simple AABB collision. Its production baseline was 42/42 GLB URLs, 629 model placements, 96 mesh objects/geometries, 69 materials, 30 runtime textures, 88,423 authored triangles, 45 colliders, and zero animation mixers.
+
+## Phase 2B.1 cashier workstation polish
+
+Phase 2B.1 keeps the same three imported runtime GLBs and adds no texture or third-party asset dependency. The checkout counter now uses a uniform `0.76` placement scale rather than the earlier non-uniform stretch. The cash register uses a uniform `0.46` scale, rests at counter height, and is rotated so its keypad and controls face the cashier.
+
+Five small instanced primitive groups provide a dark conveyor inset and cable, metal scanner/bagging/receipt surfaces, low-emission scanner glass, one anti-fatigue staff mat, an organized entrance-basket holder, and a subtle queue arrow. Two existing Food Kit products stage the item-drop area. The previous oversized solid bagging block and filled customer/cashier floor rectangles were removed. All twenty detail boxes share one unit-cube geometry; each of the five material groups renders as one instanced draw.
+
+The current production scene loads 42/42 GLB URLs with 631 model placements, 98 mesh objects, 94 geometries, 73 materials, 30 scene textures, 88,855 authored triangles, 45 colliders, and zero animation mixers. Relative to Phase 2B.0 this is +2 placements, +2 meshes, −2 geometries, +4 materials, unchanged textures/colliders, and +432 authored triangles. See `CASHIER_WORKSTATION_INTERACTION.md` for the interaction state, camera/collision implementation, visual QA, and software-rendered preview measurements.
 
 ## Complete uploaded GLB inventory
 

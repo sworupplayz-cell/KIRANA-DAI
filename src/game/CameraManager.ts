@@ -8,6 +8,7 @@ export interface CameraDiagnostics {
   yaw: number;
   pitch: number;
   pointerLocked: boolean;
+  lookEnabled: boolean;
 }
 
 /** First-person camera with pointer-lock, drag, and touch look controls. */
@@ -20,6 +21,7 @@ export class CameraManager {
   private previousPointerY = 0;
   private dragDistance = 0;
   private ignoreNextLockedMove = false;
+  private lookEnabled = true;
 
   constructor(private readonly canvas: HTMLCanvasElement) {
     this.camera.rotation.order = 'YXZ';
@@ -32,6 +34,28 @@ export class CameraManager {
 
   getYaw(): number {
     return this.yaw;
+  }
+
+  getPitch(): number {
+    return this.pitch;
+  }
+
+  setOrientation(yaw: number, pitch: number): void {
+    this.yaw = yaw;
+    this.pitch = MathUtils.clamp(pitch, -LOOK_LIMIT, LOOK_LIMIT);
+  }
+
+  setLookEnabled(enabled: boolean): void {
+    if (enabled === this.lookEnabled) return;
+    this.lookEnabled = enabled;
+    if (enabled) return;
+
+    const pointerId = this.activePointerId;
+    this.activePointerId = null;
+    if (pointerId !== null && this.canvas.hasPointerCapture(pointerId)) {
+      this.canvas.releasePointerCapture(pointerId);
+    }
+    if (document.pointerLockElement === this.canvas) void document.exitPointerLock();
   }
 
   resize(width: number, height: number): void {
@@ -50,6 +74,7 @@ export class CameraManager {
       yaw: this.yaw,
       pitch: this.pitch,
       pointerLocked: document.pointerLockElement === this.canvas,
+      lookEnabled: this.lookEnabled,
     };
   }
 
@@ -72,7 +97,7 @@ export class CameraManager {
   }
 
   private readonly onPointerDown = (event: PointerEvent): void => {
-    if (!event.isPrimary || event.button !== 0 || this.activePointerId !== null) return;
+    if (!this.lookEnabled || !event.isPrimary || event.button !== 0 || this.activePointerId !== null) return;
     this.activePointerId = event.pointerId;
     this.previousPointerX = event.clientX;
     this.previousPointerY = event.clientY;
@@ -84,6 +109,7 @@ export class CameraManager {
 
   private readonly onPointerMove = (event: PointerEvent): void => {
     if (
+      !this.lookEnabled ||
       event.pointerId !== this.activePointerId ||
       document.pointerLockElement === this.canvas
     ) {
@@ -114,7 +140,7 @@ export class CameraManager {
   };
 
   private readonly onMouseMove = (event: MouseEvent): void => {
-    if (document.pointerLockElement !== this.canvas) return;
+    if (!this.lookEnabled || document.pointerLockElement !== this.canvas) return;
     if (this.ignoreNextLockedMove) {
       this.ignoreNextLockedMove = false;
       return;

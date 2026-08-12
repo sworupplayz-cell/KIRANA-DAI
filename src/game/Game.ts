@@ -5,12 +5,18 @@ import {
   SRGBColorSpace,
   Timer,
   Vector2,
+  Vector3,
   WebGLRenderer,
 } from 'three';
 import { PlayerController } from '../player/PlayerController';
+import {
+  CashierInteractionUI,
+  type CashierInteractionState,
+} from '../ui/CashierInteractionUI';
 import { DebugOverlay } from '../ui/DebugOverlay';
 import { VirtualJoystick } from '../ui/VirtualJoystick';
 import { CashierAssetTestScene } from '../world/CashierAssetTestScene';
+import type { CashierInteractionTarget } from '../world/CashierInteractionTarget';
 import {
   MegaMartScene,
   type MegaMartSceneStats,
@@ -19,6 +25,8 @@ import { AssetManager } from './AssetManager';
 import { CameraManager } from './CameraManager';
 import { InputManager } from './InputManager';
 import { SceneManager } from './SceneManager';
+
+const CASHIER_TRANSITION_SECONDS = 0.7;
 
 export interface GameOptions {
   sceneMode?: 'mega-mart' | 'cashier-test';
@@ -30,6 +38,12 @@ export interface GameDiagnostics {
   camera: ReturnType<CameraManager['getDiagnostics']>;
   loopRunning: boolean;
   shop: MegaMartSceneStats | null;
+  interaction: {
+    state: CashierInteractionState;
+    promptVisible: boolean;
+    distanceToRegister: number;
+    transitionProgress: number;
+  };
   render: {
     calls: number;
     triangles: number;
@@ -54,12 +68,25 @@ export class Game {
   private readonly inputManager: InputManager;
   private readonly debugOverlay: DebugOverlay;
   private readonly virtualJoystick: VirtualJoystick;
+  private readonly cashierInteractionUi: CashierInteractionUI;
   private readonly worldScene: MegaMartScene | CashierAssetTestScene;
+  private readonly cashierTarget: CashierInteractionTarget;
   private readonly player: PlayerController;
   private readonly timer = new Timer();
   private readonly movement = new Vector2();
+  private readonly interactionStartPosition = new Vector3();
+  private readonly savedPlayerPosition = new Vector3();
+  private readonly cashierPosition = new Vector3();
+  private readonly transitionPosition = new Vector3();
   private readonly resizeObserver: ResizeObserver;
   private megaMartStats: MegaMartSceneStats | null = null;
+  private interactionState: CashierInteractionState = 'idle';
+  private interactionProgress = 0;
+  private distanceToRegister = Number.POSITIVE_INFINITY;
+  private transitionStartYaw = 0;
+  private transitionStartPitch = 0;
+  private savedYaw = 0;
+  private savedPitch = 0;
   private isRunning = false;
   private resumeAfterContextRestore = false;
   private disposed = false;
@@ -100,6 +127,13 @@ export class Game {
       this.worldScene.collisionWorld,
       sceneMode === 'cashier-test' ? [0, 0, 4.6] : undefined,
     );
+    this.cashierTarget = this.worldScene.getCashierInteractionTarget();
+    this.cashierPosition.fromArray(this.cashierTarget.playerPosition);
+    this.cashierInteractionUi = new CashierInteractionUI(
+      this.host,
+      this.beginCashierInteraction,
+      this.exitCashierInteraction,
+    );
     this.cameraManager.update(this.player.position);
     void this.loadWorld(sceneMode);
 
@@ -131,6 +165,12 @@ export class Game {
       camera: this.cameraManager.getDiagnostics(),
       loopRunning: this.isRunning,
       shop: this.megaMartStats,
+      interaction: {
+        state: this.interactionState,
+        promptVisible: this.cashierInteractionUi.getDiagnostics().promptVisible,
+        distanceToRegister: this.distanceToRegister,
+        transitionProgress: this.interactionProgress,
+      },
       render: {
         calls: this.renderer.info.render.calls,
         triangles: this.renderer.info.render.triangles,
@@ -154,6 +194,7 @@ export class Game {
     this.canvas.removeEventListener('webglcontextlost', this.onContextLost);
     this.canvas.removeEventListener('webglcontextrestored', this.onContextRestored);
     this.worldScene.dispose();
+    this.cashierInteractionUi.dispose();
     this.virtualJoystick.dispose();
     this.debugOverlay.dispose();
     this.inputManager.dispose();
@@ -213,12 +254,109 @@ export class Game {
   private readonly tick = (time: number): void => {
     this.timer.update(time);
     const deltaSeconds = Math.min(this.timer.getDelta(), 0.1);
-    this.inputManager.getMovement(this.movement);
-    this.player.update(deltaSeconds, this.movement, this.cameraManager.getYaw());
-    this.cameraManager.update(this.player.position);
+
+    if (this.interactionState === 'idle') {
+      this.inputManager.getMovement(this.movement);
+      this.player.update(deltaSeconds, this.movement, this.cameraManager.getYaw());
+      this.cameraManager.update(this.player.position);
+      this.updateInteractionAvailability();
+    } else {
+      this.updateCashierTransition(deltaSeconds);
+    }
+
     this.renderer.render(this.sceneManager.scene, this.cameraManager.camera);
     this.debugOverlay.update(deltaSeconds, this.renderer);
   };
+
+  private readonly beginCashierInteraction = (): void => {
+    if (
+      this.interactionState !== 'idle' ||
+      this.megaMartStats === null ||
+      this.distanceToRegister > this.cashierTarget.activationRadius
+    ) {
+      return;
+    }
+
+    this.interactionState = 'entering';
+    this.interactionProgress = 0;
+    this.savedPlayerPosition.copy(this.player.position);
+    this.interactionStartPosition.copy(this.player.position);
+    this.savedYaw = this.cameraManager.getYaw();
+    this.savedPitch = this.cameraManager.getPitch();
+    this.transitionStartYaw = this.savedYaw;
+    this.transitionStartPitch = this.savedPitch;
+    this.player.stop();
+    this.inputManager.clearMovement();
+    this.cameraManager.setLookEnabled(false);
+    this.cashierInteractionUi.setState('entering', false);
+  };
+
+  private readonly exitCashierInteraction = (): void => {
+    if (this.interactionState !== 'entering' && this.interactionState !== 'active') return;
+    this.interactionState = 'exiting';
+    this.interactionProgress = 0;
+    this.interactionStartPosition.copy(this.player.position);
+    this.transitionStartYaw = this.cameraManager.getYaw();
+    this.transitionStartPitch = this.cameraManager.getPitch();
+    this.player.stop();
+    this.inputManager.clearMovement();
+    this.cashierInteractionUi.setState('exiting', false);
+  };
+
+  private updateInteractionAvailability(): void {
+    this.distanceToRegister = this.player.position.distanceTo(this.cashierPosition);
+    const promptVisible =
+      this.megaMartStats !== null &&
+      this.distanceToRegister <= this.cashierTarget.activationRadius;
+    this.cashierInteractionUi.setState('idle', promptVisible);
+  }
+
+  private updateCashierTransition(deltaSeconds: number): void {
+    if (this.interactionState === 'active') {
+      this.player.setPosition(this.cashierPosition);
+      this.cameraManager.setOrientation(this.cashierTarget.yaw, this.cashierTarget.pitch);
+      this.cameraManager.update(this.player.position);
+      this.distanceToRegister = 0;
+      return;
+    }
+
+    this.interactionProgress = Math.min(
+      1,
+      this.interactionProgress + deltaSeconds / CASHIER_TRANSITION_SECONDS,
+    );
+    const eased = this.interactionProgress * this.interactionProgress * (3 - 2 * this.interactionProgress);
+    const isEntering = this.interactionState === 'entering';
+    const destination = isEntering ? this.cashierPosition : this.savedPlayerPosition;
+    const destinationYaw = isEntering ? this.cashierTarget.yaw : this.savedYaw;
+    const destinationPitch = isEntering ? this.cashierTarget.pitch : this.savedPitch;
+
+    this.transitionPosition.lerpVectors(this.interactionStartPosition, destination, eased);
+    this.player.setPosition(this.transitionPosition);
+    this.cameraManager.setOrientation(
+      this.lerpAngle(this.transitionStartYaw, destinationYaw, eased),
+      this.transitionStartPitch + (destinationPitch - this.transitionStartPitch) * eased,
+    );
+    this.cameraManager.update(this.player.position);
+    this.distanceToRegister = this.player.position.distanceTo(this.cashierPosition);
+
+    if (this.interactionProgress < 1) return;
+    if (isEntering) {
+      this.interactionState = 'active';
+      this.cashierInteractionUi.setState('active', false);
+      return;
+    }
+
+    this.interactionState = 'idle';
+    this.interactionProgress = 0;
+    this.inputManager.clearMovement();
+    this.cameraManager.setLookEnabled(true);
+    this.updateInteractionAvailability();
+  }
+
+  private lerpAngle(start: number, end: number, amount: number): number {
+    const difference = ((end - start + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+    return start + difference * amount;
+  }
 
   private readonly resize = (): void => {
     if (this.disposed) return;

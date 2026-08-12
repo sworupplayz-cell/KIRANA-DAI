@@ -27,6 +27,17 @@ export class PlayerController {
     this.position = new Vector3(...spawn);
   }
 
+  setPosition(position: Vector3): void {
+    this.position.copy(position);
+    this.velocity.set(0, 0);
+    this.lastCollisions = [];
+  }
+
+  stop(): void {
+    this.velocity.set(0, 0);
+    this.lastCollisions = [];
+  }
+
   update(deltaSeconds: number, movement: Vector2, yaw: number): void {
     const forwardX = -Math.sin(yaw);
     const forwardZ = -Math.cos(yaw);

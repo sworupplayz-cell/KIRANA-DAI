@@ -16,7 +16,7 @@ export class DebugOverlay {
     this.element.setAttribute('aria-live', 'polite');
 
     const title = document.createElement('strong');
-    title.textContent = 'PHASE 2B.0 · CASHIER WORKSTATION FOUNDATION';
+    title.textContent = 'PHASE 2B.1 · CASHIER POLISH & INTERACTION';
 
     this.statusElement = document.createElement('span');
     this.statusElement.textContent = 'Renderer starting…';

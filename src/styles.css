@@ -184,6 +184,107 @@ select {
   will-change: transform;
 }
 
+.interaction-prompt,
+.cashier-interaction-panel {
+  position: absolute;
+  z-index: 4;
+  border: 1px solid rgb(255 213 135 / 42%);
+  color: #fff8e9;
+  background: rgb(10 19 15 / 90%);
+  box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 28%);
+  backdrop-filter: blur(0.45rem);
+}
+
+.interaction-prompt {
+  bottom: max(1.25rem, env(safe-area-inset-bottom));
+  left: 50%;
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.65rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 0.5rem);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.interaction-prompt.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.interaction-prompt__key {
+  display: grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 0.35rem;
+  color: #ffce7d;
+  background: rgb(255 255 255 / 8%);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.cashier-interaction-panel {
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  display: flex;
+  width: min(15rem, calc(100% - 2rem));
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.9rem;
+  border-radius: 0.75rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(0.6rem);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.cashier-interaction-panel.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.cashier-interaction-panel__eyebrow {
+  color: #ffca76;
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.cashier-interaction-panel strong {
+  font-size: 1rem;
+}
+
+.cashier-interaction-panel > span:not(.cashier-interaction-panel__eyebrow) {
+  color: #cad6cc;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.cashier-interaction-panel__exit {
+  align-self: flex-end;
+  min-width: 5rem;
+  min-height: 2.4rem;
+  margin-top: 0.35rem;
+  border: 1px solid rgb(255 213 135 / 38%);
+  border-radius: 0.5rem;
+  color: #fff8e9;
+  background: #405b53;
+  font-weight: 750;
+}
+
+.interaction-prompt:focus-visible,
+.cashier-interaction-panel__exit:focus-visible {
+  outline: 2px solid #ffca76;
+  outline-offset: 2px;
+}
+
 @media (hover: none) and (pointer: coarse) {
   #app::after {
     display: none;
@@ -201,6 +302,31 @@ select {
     font-size: 0.7rem;
     content: "Joystick walk · drag the scene to look";
   }
+
+  .interaction-prompt {
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: max(1.3rem, env(safe-area-inset-bottom));
+    left: auto;
+    min-width: 8.75rem;
+    min-height: 3.1rem;
+    justify-content: center;
+    transform: translateY(0.5rem);
+    touch-action: manipulation;
+  }
+
+  .interaction-prompt.is-visible {
+    transform: translateY(0);
+  }
+
+  .interaction-prompt__key {
+    display: none;
+  }
+
+  .cashier-interaction-panel__exit {
+    min-width: 6.25rem;
+    min-height: 2.75rem;
+    touch-action: manipulation;
+  }
 }
 
 @media (max-width: 28rem) {
@@ -212,7 +338,9 @@ select {
 
 @media (prefers-reduced-transparency: reduce) {
   .debug-overlay,
-  .virtual-joystick {
+  .virtual-joystick,
+  .interaction-prompt,
+  .cashier-interaction-panel {
     backdrop-filter: none;
     background: #111b15;
   }

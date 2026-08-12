@@ -13,6 +13,7 @@ import {
 } from 'three';
 import type { AssetManager } from '../game/AssetManager';
 import { CollisionWorld } from '../systems/CollisionWorld';
+import type { CashierInteractionScene, CashierInteractionTarget } from './CashierInteractionTarget';
 import type { MegaMartLoadProgress, MegaMartSceneStats } from './MegaMartScene';
 
 interface TestPlacement {
@@ -28,15 +29,15 @@ const TEST_PLACEMENTS: readonly TestPlacement[] = [
     label: 'Imported checkout counter',
     url: '/assets/supermarket/cashier/checkout-counter.glb',
     position: [0, 0, 0],
-    scale: [0.86, 0.72, 1.02],
+    scale: [0.76, 0.76, 0.76],
     rotation: [0, Math.PI / 2, 0],
   },
   {
     label: 'Imported cash register',
     url: '/assets/supermarket/cashier/cash-register.glb',
-    position: [-0.22, 0.99, 0.34],
-    scale: [0.48, 0.48, 0.48],
-    rotation: [0, Math.PI / 2, 0],
+    position: [-0.12, 1.025, 0.31],
+    scale: [0.46, 0.46, 0.46],
+    rotation: [0, -Math.PI / 2, 0],
   },
   {
     label: 'Imported shopping basket',
@@ -47,8 +48,8 @@ const TEST_PLACEMENTS: readonly TestPlacement[] = [
   },
 ];
 
-/** Isolated first-person scale/collision arrangement for the Phase 2B.0 imports. */
-export class CashierAssetTestScene {
+/** Isolated first-person scale/collision arrangement for the polished cashier imports. */
+export class CashierAssetTestScene implements CashierInteractionScene {
   readonly collisionWorld = new CollisionWorld({ minX: -5.7, maxX: 5.7, minZ: -5.7, maxZ: 5.7 });
 
   private readonly root = new Group();
@@ -62,7 +63,7 @@ export class CashierAssetTestScene {
     private readonly assets: AssetManager,
     private readonly onProgress?: (progress: MegaMartLoadProgress) => void,
   ) {
-    this.root.name = 'Phase 2B.0 isolated cashier asset test';
+    this.root.name = 'Phase 2B.1 isolated cashier asset test';
     scene.add(this.root);
 
     const floorGeometry = new BoxGeometry(12, 0.1, 12);
@@ -77,10 +78,10 @@ export class CashierAssetTestScene {
 
     this.collisionWorld.add({
       label: 'Imported checkout counter',
-      minX: -0.52,
-      maxX: 0.52,
-      minZ: -1.08,
-      maxZ: 1.08,
+      minX: -0.34,
+      maxX: 0.34,
+      minZ: -0.87,
+      maxZ: 0.87,
     });
   }
 
@@ -110,6 +111,15 @@ export class CashierAssetTestScene {
     }
 
     return this.collectStats(loaded, failed, errors);
+  }
+
+  getCashierInteractionTarget(): CashierInteractionTarget {
+    return {
+      playerPosition: [-1.02, 0, 0.31],
+      yaw: -Math.PI / 2,
+      pitch: -0.31,
+      activationRadius: 1.25,
+    };
   }
 
   dispose(): void {

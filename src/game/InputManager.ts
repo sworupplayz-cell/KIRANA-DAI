@@ -53,6 +53,10 @@ export class InputManager {
     if (this.virtualMovement.lengthSq() > 1) this.virtualMovement.normalize();
   }
 
+  clearMovement(): void {
+    this.reset();
+  }
+
   isPressed(code: string): boolean {
     return this.pressed.has(code);
   }
